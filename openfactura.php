@@ -173,7 +173,7 @@ class Openfactura extends Module
             'codigo_actividad_economica_active' => (int)$codigo_actividad_economica_active,
             'actividades_economicas' => pSQL($actividades_array),
             'direccion_origen' => pSQL($response['direccion']),
-            'comuna_origen' => pSQL($response['direccionRegional']),
+            'comuna_origen' => pSQL($response['comuna']),
             'sucursales' => pSQL($sucursales_array),
             'cdgSIISucur' => pSQL($response['cdgSIISucur']),
             'json_info_contribuyente' => pSQL(json_encode($response))
