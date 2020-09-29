@@ -677,11 +677,16 @@ class Openfactura extends Module
                 "Totales" => $totales
             ], "Detalle" => $detalle
         ];
+        $custom['custom'] = [
+            'origin' => 'PRESTASHOP'
+        ];
+        
         $document_send = array_merge($document_send, $response);
         $document_send = array_merge($document_send, $customer);
         $document_send = array_merge($document_send, $customize_page);
         $document_send = array_merge($document_send, $self_service);
         $document_send = array_merge($document_send, $dte);
+        $document_send = array_merge($document_send, $custom);
         $document_send = json_encode($document_send, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         PrestaShopLogger::addLog(print_r($document_send, true), 1);
         //generate document
