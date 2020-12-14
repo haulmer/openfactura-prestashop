@@ -22,7 +22,8 @@ Los beneficios del plugin OpenFactura son:
 
 - **Compatible 100% con el S.I.I.**: Todos los documentos que se emitan en tu ecommerce ya sea a través de la página de emisión -por tus clientes- o aquellos que se generen automáticamente, serán enviados al SII al instante y cuentan con todas las exigencias de la ley.
 
-Para más información, puedes visitar nuestro sitio web: [https://www.openfactura.cl/factura-electronica/integraciones/](https://www.openfactura.cl/factura-electronica/integraciones/).
+La documentación está disponible en nuestro sitio de tutoriales [Haulmer  Docs](https://help.haulmer.com/):
+  - [Guía de Instalación del plugin Prestashop](https://help.haulmer.com/hc/integraciones/como-instalar-el-plugin-de-openfactura-en-prestashop-f7a902e0-1a68-482f-b142-07c635d5e42c?searched=true)
 
 
 Funcionamiento del plugin
@@ -36,5 +37,5 @@ Todo el funcionamiento del módulo radica en el hook de Prestashop `hookActionOr
 Instalación plugin
 -------------------------------
 
-La documentación está disponible en nuestro sitio de tutoriales [Haulmer  Docs](https://www.haulmer.com/docs/):
-  - [Guía de Instalación del Módulo Prestashop](https://www.haulmer.com/docs/como-instalar-el-plugin-de-openfactura-en-prestashop/)
+La documentación está disponible en nuestro sitio de tutoriales [Haulmer  Docs](https://help.haulmer.com//):
+  - [Guía de Instalación del Módulo Prestashop](https://help.haulmer.com/hc/integraciones/como-instalar-el-plugin-de-openfactura-en-prestashop-f7a902e0-1a68-482f-b142-07c635d5e42c)

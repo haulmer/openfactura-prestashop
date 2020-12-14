@@ -206,7 +206,6 @@ class Openfactura extends Module
 
     public function createJsonOpenFactura($order, $customer_detail, $openfacturaRegistryActive)
     {
-        $falg_prices_include_tax = false;
         $document_send = array();
         $response = array();
         $response["response"] = ["SELF_SERVICE"];
@@ -270,21 +269,16 @@ class Openfactura extends Module
         $products = $order->getProducts();
         $orderDetail = $order->getOrderDetailList();
 
-        PrestaShopLogger::addLog('ORDEN: ' . json_encode($order), 1);
-        PrestaShopLogger::addLog('PRODUCTS: ' . json_encode($order->getProducts()), 1);
+        PrestaShopLogger::addLog('ORDEN: ' . json_encode($order, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
+        PrestaShopLogger::addLog('PRODUCTS: ' . json_encode($order->getProducts(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
         $cart = new Cart($order->id_cart);
         $cartRules = $cart->getCartRules();
-        PrestaShopLogger::addLog('CART RULES: ' . json_encode($cartRules), 1);
-      
+        PrestaShopLogger::addLog('CART RULES: ' . json_encode($cartRules, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
 
-        //record products veriify tax
-        foreach ($products as $product) {
-            if ($product['total_price_tax_incl'] == $product['total_price_tax_excl']) {
-                $is_exe = true;
-            } else {
-                $falg_prices_include_tax = true;
-                $is_afecta = true;
-            }
+        if ($order->total_paid_tax_incl == $order->total_paid_tax_excl && $order->total_shipping == $order->total_shipping_tax_excl) {
+            $is_exe = true;
+        } else {
+            $is_afecta = true;
         }
 
         //find product more cheap
@@ -297,7 +291,6 @@ class Openfactura extends Module
         }
         //record products and discount codes
         $freeShipping = false;
-        $cheapAmount = false;
         $i = 1;
         $errorDiscount = 0;
         foreach ($products as $product) {
@@ -359,7 +352,7 @@ class Openfactura extends Module
                                 cv.id_item = ' . (int)$idProduct . ' and 
                                 cr.id_cart_rule=' . (int)$idCartRule . ''
                             );
-                            PrestaShopLogger::addLog('restrictions: ' . json_encode($result), 1);
+                            PrestaShopLogger::addLog('restrictions: ' . json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
                             if (!empty($result)) {
                                 if ($rule['reduction_percent'] > 0) {
                                     $discount = $discount + ($product['total_price_tax_excl']
@@ -378,33 +371,33 @@ class Openfactura extends Module
                             }
                         }
                     }
-                    if (!$cheapAmount) {
-                        $discount = round($discount);
-                        $errorDiscount = $errorDiscount + $discount;
-                        if ($i == count($products)) {
-                            if ($freeShipping) {
-                                $totalDiscountTaxExcluded = $order->total_discounts_tax_excl
-                                    - $order->total_shipping_tax_excl;
-                            } else {
-                                $totalDiscountTaxExcluded = $order->total_discounts_tax_excl;
-                            }
-                            PrestaShopLogger::addLog(' OrderID: ' . $order->id . ' i: ' . $i
-                                . " count: " . count($products) . " sumaDeDescuentos: "
-                                . $errorDiscount . " descuentoTotal: " . $order->total_discounts_tax_excl
-                                . ' total discount without shipping: ' . $totalDiscountTaxExcluded, 1);
-                            if ($totalDiscountTaxExcluded > $errorDiscount) {
-                                $discount = $discount + ($totalDiscountTaxExcluded - $errorDiscount);
-                            }
+                    $discount = round($discount);
+                    $errorDiscount = $errorDiscount + $discount;
+                    if ($i == count($products)) {
+                        if ($freeShipping) {
+                            $totalDiscountTaxExcluded = $order->total_discounts_tax_excl
+                                - $order->total_shipping_tax_excl;
+                        } else {
+                            $totalDiscountTaxExcluded = $order->total_discounts_tax_excl;
                         }
-                        $totalDiscount = $product['total_price_tax_excl'] - $discount;
-                        $mnt_exe = $mnt_exe + $totalDiscount;
-                        $items = [
-                            "NroLinDet" => $i, 'NmbItem' => $product['product_name'],
-                            'QtyItem' => $product['product_quantity'],
-                            'PrcItem' => round($product['unit_price_tax_excl'], 6),
-                            'MontoItem' => round($totalDiscount), 'IndExe' => 1, 'DescuentoMonto' => ($discount)
-                        ];
+                        PrestaShopLogger::addLog(' OrderID: ' . $order->id . ' i: ' . $i
+                            . " count: " . count($products) . " sumaDeDescuentos: "
+                            . $errorDiscount . " descuentoTotal: " . $order->total_discounts_tax_excl
+                            . ' total discount without shipping: ' . $totalDiscountTaxExcluded, 1);
+                        if ($totalDiscountTaxExcluded > $errorDiscount) {
+                            $discount = $discount + ($totalDiscountTaxExcluded - $errorDiscount);
+                        }
                     }
+                    $totalDiscount = $product['total_price_tax_excl'] - $discount;
+                    $mnt_exe = $mnt_exe + $totalDiscount;
+                    $items = [
+                        "NroLinDet" => $i, 'NmbItem' => $product['product_name'],
+                        'QtyItem' => $product['product_quantity'],
+                        'PrcItem' => round($product['unit_price_tax_excl'], 6),
+                        'MontoItem' => round($totalDiscount), 
+                        'IndExe' => 1, 
+                        'DescuentoMonto' => ($discount)
+                    ];
                 } else {
                     $mnt_exe = $mnt_exe + $product['total_price_tax_excl'];
                     $items = [
@@ -412,11 +405,12 @@ class Openfactura extends Module
                         'NmbItem' => $product['product_name'],
                         'QtyItem' => $product['product_quantity'],
                         'PrcItem' => round($product['unit_price_tax_excl'], 6),
-                        'MontoItem' => round($product['total_price_tax_excl']), 'IndExe' => 1
+                        'MontoItem' => round($product['total_price_tax_excl']), 
+                        'IndExe' => 1
                     ];
                 }
             } else {
-                //afecta and exenta
+                //afecto
                 if ($order->total_discounts > 0) {
                     $cart = new Cart($order->id_cart);
                     $cartRules = $cart->getCartRules();
@@ -489,34 +483,31 @@ class Openfactura extends Module
                             }
                         }
                     }
-
-                    if (!$cheapAmount) {
-                        $discount = round($discount);
-                        $errorDiscount = $errorDiscount + $discount;
-                        if ($i == count($products)) {
-                            if ($freeShipping) {
-                                $totalDiscountTaxExcluded = $order->total_discounts_tax_excl
-                                    - $order->total_shipping_tax_excl;
-                            } else {
-                                $totalDiscountTaxExcluded = $order->total_discounts_tax_excl;
-                            }
-                            PrestaShopLogger::addLog(' OrderID: ' . $order->id . ' i: ' . $i
-                                . " count: " . count($products) . " sumaDeDescuentos: "
-                                . $errorDiscount . " descuentoTotal: " . $order->total_discounts_tax_excl
-                                . ' total discount without shipping: ' . $totalDiscountTaxExcluded, 1);
-                            if ($totalDiscountTaxExcluded > $errorDiscount) {
-                                $discount = $discount + ($totalDiscountTaxExcluded - $errorDiscount);
-                            }
+                    $discount = round($discount);
+                    $errorDiscount = $errorDiscount + $discount;
+                    if ($i == count($products)) {
+                        if ($freeShipping) {
+                            $totalDiscountTaxExcluded = $order->total_discounts_tax_excl
+                                - $order->total_shipping_tax_excl;
+                        } else {
+                            $totalDiscountTaxExcluded = $order->total_discounts_tax_excl;
                         }
-                        $totalDiscount = ($product['total_price_tax_excl'] - $discount);
-                        $mnt_total = $mnt_total + $totalDiscount;
-                        $items = [
-                            "NroLinDet" => $i, 'NmbItem' => $product['product_name'],
-                            'QtyItem' => $product['product_quantity'],
-                            'PrcItem' => round($product['unit_price_tax_excl'], 6),
-                            'MontoItem' => round($totalDiscount), 'DescuentoMonto' => ($discount)
-                        ];
+                        PrestaShopLogger::addLog(' OrderID: ' . $order->id . ' i: ' . $i
+                            . " count: " . count($products) . " sumaDeDescuentos: "
+                            . $errorDiscount . " descuentoTotal: " . $order->total_discounts_tax_excl
+                            . ' total discount without shipping: ' . $totalDiscountTaxExcluded, 1);
+                        if ($totalDiscountTaxExcluded > $errorDiscount) {
+                            $discount = $discount + ($totalDiscountTaxExcluded - $errorDiscount);
+                        }
                     }
+                    $totalDiscount = ($product['total_price_tax_excl'] - $discount);
+                    $mnt_total = $mnt_total + $totalDiscount;
+                    $items = [
+                        "NroLinDet" => $i, 'NmbItem' => $product['product_name'],
+                        'QtyItem' => $product['product_quantity'],
+                        'PrcItem' => round($product['unit_price_tax_excl'], 6),
+                        'MontoItem' => round($totalDiscount), 'DescuentoMonto' => ($discount)
+                    ];
                 } else {
                     $mnt_total = $mnt_total + $product['total_price_tax_excl'];
                     $items = [
@@ -543,17 +534,14 @@ class Openfactura extends Module
             WHERE 
             cr.id_carrier = ' . (int)$idCarrier . ''
         );
-        PrestaShopLogger::addLog('result carrier: ' . json_encode($result), 1);
+        PrestaShopLogger::addLog('result carrier: ' . json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
         //Record the office verifying if you have an associated tax
         if (!empty($result)) {
             $id = $result[0]['id_tax_rules_group'];
             PrestaShopLogger::addLog('id result carrier: ' . $id, 1);
             if ($id == 0) {
                 $shippingTaxable = true;
-                $is_exe = true;
             } else {
-                $falg_prices_include_tax = true;
-                $is_afecta = true;
                 $shippingTaxable = false;
             }
         }
@@ -561,7 +549,7 @@ class Openfactura extends Module
         //Add the dispatch item verifying if the discount code used has the dispatch free
         if ($order->total_shipping > 0) {
             $shipping = new Carrier((int)($order->id_carrier));
-            PrestaShopLogger::addLog('shipping: ' . json_encode($shipping), 1);
+            PrestaShopLogger::addLog('shipping: ' . json_encode($shipping, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 1);
             $items = [
                 "NroLinDet" => $i,
                 'NmbItem' => $shipping->name,
@@ -592,73 +580,30 @@ class Openfactura extends Module
             $i++;
             array_push($detalle, $items);
         }
-        if ($is_exe == true && $is_afecta == true) {
+
+        if ($is_exe) {
+            $id_doc = array("FchEmis" => $date);
+            $totales = array(
+                "MntTotal" => intval($order->total_paid),
+                'MntExe' => intval($mnt_exe)
+            );
+        } elseif ($is_afecta) {
             if ($mnt_total <= 3 && $freeShipping) {
-                $is_afecta = false;
-            }
-        }
-        if ($falg_prices_include_tax == true) {
-            if ($is_exe == true && $is_afecta == true) {
-                //afecta and exenta
-                if ($mnt_total <= 3 && $freeShipping) {
-                    $iva = 1;
-                } else {
-                    $iva = round($mnt_total * 0.19, 1);
-                    $iva = (int)($iva);
-                }
-                $montoTotal = ((int)($mnt_total) + $iva + (int)($mnt_exe));
-                if ($order->total_paid == $montoTotal
-                    || $order->total_paid == $montoTotal - 1
-                    || $order->total_paid == $montoTotal + 1) {
-                    $id_doc = array("FchEmis" => $date, "IndMntNeto" => 2);
-                    $totales = array(
-                        "MntNeto" => (int)($mnt_total),
-                        "TasaIVA" => "19.00",
-                        "IVA" => $iva,
-                        "MntTotal" => $order->total_paid,
-                        'MntExe' => (int)($mnt_exe)
-                    );
-                }
-                $id_doc = array("FchEmis" => $date, "IndMntNeto" => 2);
-                $totales = array(
-                    "MntNeto" => (int)($mnt_total),
-                    "TasaIVA" => "19.00",
-                    "IVA" => $iva,
-                    "MntTotal" => $order->total_paid,
-                    'MntExe' => (int)($mnt_exe)
-                );
+                $iva = 1;
             } else {
-                //only afecta
                 $iva = round($mnt_total * 0.19, 1);
                 $iva = (int)($iva);
-                $montoTotal = $mnt_total + $iva;
-                if ($order->total_paid == $montoTotal
-                    || $order->total_paid == $montoTotal - 1
-                    || $order->total_paid == $montoTotal + 1) {
-                    $date = date('Y-m-d');
-                    $id_doc = array("FchEmis" => $date, "IndMntNeto" => 2);
-                    $totales = array(
-                        "MntNeto" => (int)($mnt_total),
-                        "TasaIVA" => "19.00",
-                        "IVA" => $iva,
-                        "MntTotal" => (int)$order->total_paid
-                    );
-                }
-                $date = date('Y-m-d');
-                $id_doc = array("FchEmis" => $date, "IndMntNeto" => 2);
-                $totales = array(
-                    "MntNeto" => (int)($mnt_total),
-                    "TasaIVA" => "19.00",
-                    "IVA" => $iva,
-                    "MntTotal" => (int)$order->total_paid
-                );
             }
-        } else {
-            //only exenta
-            $date = date('Y-m-d');
-            $id_doc = array("FchEmis" => $date);
-            $totales = array("MntTotal" => (int)($order->total_paid), 'MntExe' => (int)($order->total_paid));
+            $id_doc = array("FchEmis" => $date, "IndMntNeto" => 2);
+            $totales = array(
+                "MntNeto" => intval($mnt_total),
+                "TasaIVA" => "19.00",
+                "IVA" => $iva,
+                "MntTotal" => intval($order->total_paid),
+                'MntExe' => (int)($mnt_exe)
+            );
         }
+
         $emisor = array(
             "RUTEmisor" => $openfacturaRegistryActive['rut'],
             "RznSocEmisor" => $openfacturaRegistryActive['razon_social'],
@@ -680,15 +625,15 @@ class Openfactura extends Module
         $custom['custom'] = [
             'origin' => 'PRESTASHOP'
         ];
-        
+
         $document_send = array_merge($document_send, $response);
         $document_send = array_merge($document_send, $customer);
         $document_send = array_merge($document_send, $customize_page);
         $document_send = array_merge($document_send, $self_service);
         $document_send = array_merge($document_send, $dte);
         $document_send = array_merge($document_send, $custom);
-        $document_send = json_encode($document_send, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        PrestaShopLogger::addLog(print_r($document_send, true), 1);
+        $document_send = json_encode($document_send, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        PrestaShopLogger::addLog($document_send, 1);
         //generate document
         $url_generate = '';
         if ($openfacturaRegistryActive['is_demo'] == "1") {
@@ -716,25 +661,31 @@ class Openfactura extends Module
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-        PrestaShopLogger::addLog(($response), 1);
+        PrestaShopLogger::addLog(json_encode(json_decode($response, JSON_PRETTY_PRINT)), 1);
         $response = json_decode($response, true);
         $id_order = $orderDetail[0]['id_order'];
         $id_order_invoice = $orderDetail[0]['id_order_invoice'];
 
-        if (!empty($response['SELF_SERVICE']['url'])) {
-            $note = $response['SELF_SERVICE']['url'];
-            PrestaShopLogger::addLog('NOTA: ' . ($note), 1);
-            $sql = 'UPDATE ' . _DB_PREFIX_ . 'order_invoice SET 
-            note="Obten tu documento tributario en: ' . pSQL($note) . '"
-            WHERE id_order_invoice="' . (int)$id_order_invoice . '" and id_order="' . (int)$id_order . '"';
-            Db::getInstance()->Execute($sql);
-        } else {
-            PrestaShopLogger::addLog(($response), 3);
-            $sql = 'UPDATE ' . _DB_PREFIX_ . 'order_invoice SET 
-            note="Su documento tributario no se pudo generar."
-            WHERE id_order_invoice="' . (int)$id_order_invoice . '" and id_order="' . (int)$id_order . '"';
-            Db::getInstance()->Execute($sql);
+        $urlSS = isset($response["SELF_SERVICE"]) ? $response["SELF_SERVICE"]["url"] : null;
+        try {
+            if (isset($urlSS)) {
+                $note = $urlSS;
+                PrestaShopLogger::addLog('NOTA: ' . $note, 1);
+                $sql = 'UPDATE ' . _DB_PREFIX_ . 'order_invoice SET 
+                note="Obten tu documento tributario en: ' . pSQL($note) . '"
+                WHERE id_order_invoice="' . (int)$id_order_invoice . '" and id_order="' . (int)$id_order . '"';
+                Db::getInstance()->Execute($sql);
+            } else {
+                PrestaShopLogger::addLog(json_encode($response, JSON_PRETTY_PRINT), 3);
+                $sql = 'UPDATE ' . _DB_PREFIX_ . 'order_invoice SET 
+                note="Su documento tributario no se pudo generar."
+                WHERE id_order_invoice="' . (int)$id_order_invoice . '" and id_order="' . (int)$id_order . '"';
+                Db::getInstance()->Execute($sql);
+            }
+        } catch (Exception $e) {
+            PrestaShopLogger::addLog($e->getMessage(), 3);
         }
+
         return true;
     }
 }
