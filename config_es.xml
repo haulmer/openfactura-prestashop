@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>openfactura</name>
+    <displayName><![CDATA[OpenFactura]]></displayName>
+    <version><![CDATA[3.0.0]]></version>
+    <description><![CDATA[Automatiza la emisi&oacute;n de boletas y/o facturas en tu ecommerce]]></description>
+    <author><![CDATA[Haulmer]]></author>
+    <tab><![CDATA[front_office_features]]></tab>
+	<confirmUninstall><![CDATA[¿Estás seguro de que quieres desinstalar el módulo?]]></confirmUninstall>
+    <is_configurable>0</is_configurable>
+    <need_instance>0</need_instance>
+</module>
