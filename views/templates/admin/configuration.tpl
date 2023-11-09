@@ -31,9 +31,9 @@
         ya sea boleta o factura, a través del Autoservicio de Emisión, ingresando únicamente los datos de receptor.
         Este correo se envía al momento de aceptarse el pago de la 'Orden' (Pago Aceptado).
         Si tienes alguna duda acerca de los campos del Invoice que se utilizan para generar el documento,
-        puedes revisar nuestra Documentación de Integración con Pestashop.
+        puedes revisar nuestra Documentación de Integración con Prestashop.
         *}
-        {l s='The OpenFactura Integration will send an email to the client so that he can generate his own electronic document, either ballot or invoice, through the Emission Self-Service, entering only the receiver data. This email is sent when the payment of the Order (Payment Accepted) is accepted. If you have any questions about the Invoice fields that are used to generate the document, You can check our Integration Documentation with Pestashop.' mod='openfactura'}
+        {l s='OpenFactura Integration will send an email to the client so that they can generate their own electronic document, either ballot or invoice, through the Emission Self-Service, entering only the receiver data. This email is sent when the payment of the Order (Payment Accepted) is accepted. If you have any questions about the Invoice fields that are used to generate the document, you can check our Integration Documentation with Prestashop.' mod='openfactura'}
         {* <a href="#" class="linkBlue"> </a> *}
       </p>
     </div>
@@ -139,7 +139,7 @@
             <div>
             {*El enlace de autoservicio que se enviará al cliente podrá ir con
               un logotipo personalizado de la empresa.*}
-            {l s='The self-service link that will be sent to the customer can go with a custom company logo.' mod='openfactura'}              
+            {l s='The self-service link that will be sent to the customer can be delivered with a custom company logo.' mod='openfactura'}              
             {*Ver ejemplo.*}
               <a id="openDialog-preview" href="#" class="linkBlue">{l s='Example.' mod='openfactura'}</a>
               <input id="moduleLink" name="moduleLink" type="hidden" value="{$moduleLink|escape:'htmlall':'UTF-8'}modules/openfactura/views/img/preview.svg">
@@ -182,7 +182,7 @@
           sucursales, puedes seleccionar la que desees ocupar. Si has realizado
           cambios en el SII, recuerda hacer clic en 'Actualizar' para que se
           vean reflejados.*}
-        {l s='The following fields are obtained from the SII, through OpenFactura, and cannot be modified from here. If you have branches, you can select the one you want to occupy. If you have made changes to the SII, remember to click on Update so that they are reflected.' mod='openfactura'}
+        {l s='The following fields are obtained from SII through OpenFactura, and cannot be modified from here. If you have multiple branches, you can select the one you want to occupy. If you have made changes at SII, remember to click on Update so that they are reflected.' mod='openfactura'}
         </p>
           <div class="s-row">
             <div class="col-2">
